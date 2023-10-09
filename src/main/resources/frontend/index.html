@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome!</title>
+    <link rel="stylesheet" type="text/css" href="/assets/css/style.css" />
+</head>
+<body>
+<section class="wrapper">
+    <div class="form profile">
+        <header th:text="${'Hi, ' + currentUser.name + '!'}"></header>
+        <form th:action="@{/changeProfile}" action="#" method="post">
+            <input type="text" name="name" placeholder="New name" th:value="${currentUser.name}"/>
+            <input type="text" name="email" placeholder="New email" th:value="${currentUser.email}"/>
+            <input type="password" name="password" placeholder="New password"/>
+            <p class="changeDataResult" th:if="${changeDataResult!=''}" th:text="${changeDataResult}"></p>
+            <input type="submit" value="Change" />
+        </form>
+        <form th:action="@{/logout}" method="post">
+            <input type="submit" value="Sign Out"/>
+        </form>
+    </div>
+</section>
+</body>
+</html>
