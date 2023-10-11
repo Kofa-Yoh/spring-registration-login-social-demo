@@ -21,7 +21,7 @@ body {
     max-width: 470px;
     width: 100%;
     border-radius: 12px;
-    padding: 20px 30px 160px;
+    padding: 20px 30px 100px;
     background: #4070f4;
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
     overflow: hidden;
@@ -105,6 +105,41 @@ form input[type="submit"] {
     background: #4070f4;
     color: #fff;
     border: none;
+}
+
+.social-btn {
+    height: 60px;
+    outline: none;
+    border: none;
+    padding: 0 15px;
+    margin: 20px 0;
+    color: #333;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.social-btn a:link,
+.social-btn a:visited,
+.social-btn a:hover,
+.social-btn a:active {
+    text-decoration: none;
+}
+
+.social-btn p {
+    display: block;
+    padding: 15px 30px;
+    height: 100%;
+    font-size: 18px;
+    text-align: center;
+    font-weight: 500;
+    color: #333;
+}
+
+.google-icon, .facebook-icon {
+    position: absolute;
+    margin-top: 8px;
+    margin-left: 0px;
 }
 
 p.error {

@@ -13,6 +13,10 @@ public class User {
     private String email;
     private String password;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "auth_type")
+    private AuthenticationType authType;
+
     @Override
     public String toString() {
         return "User{" +
@@ -53,5 +57,13 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public AuthenticationType getAuthType() {
+        return authType;
+    }
+
+    public void setAuthType(AuthenticationType authType) {
+        this.authType = authType;
     }
 }

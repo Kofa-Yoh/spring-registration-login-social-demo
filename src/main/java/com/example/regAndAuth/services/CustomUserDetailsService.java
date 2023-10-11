@@ -5,8 +5,7 @@ import com.example.regAndAuth.dtos.SignupPayload;
 import com.example.regAndAuth.dtos.UserDto;
 import com.example.regAndAuth.err.CurrentUserNotFoundException;
 import com.example.regAndAuth.err.UserAlreadyExistsException;
-import com.example.regAndAuth.models.CustomUserDetails;
-import com.example.regAndAuth.models.User;
+import com.example.regAndAuth.models.*;
 import com.example.regAndAuth.repositories.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,16 +32,10 @@ public class CustomUserDetailsService {
     }
 
     public UserDto getCurrentUserDto() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (!(authentication instanceof AnonymousAuthenticationToken)) {
-            CustomUserDetails userDetails =
-                    (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails userDetails = this.getCurrentCustomUserDetails();
+        if (userDetails != null) {
             UserDto userDto = modelMapper.map(userDetails.getUser(), UserDto.class);
-            userDto.setRole(userDetails.getAuthorities()
-                    .stream()
-                    .map(GrantedAuthority::getAuthority)
-                    .map(r->r.replace("ROLE_", ""))
-                    .collect(Collectors.joining(",")));
+            userDto.setRole(userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).map(r -> r.replace("ROLE_", "")).collect(Collectors.joining(",")));
             return userDto;
         } else {
             UserDto userDto = new UserDto();
@@ -52,10 +45,8 @@ public class CustomUserDetailsService {
 
     public Boolean changeUserData(ProfilePayload profilePayload) throws UserAlreadyExistsException, CurrentUserNotFoundException {
         Boolean userIsChanged = false;
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (!(authentication instanceof AnonymousAuthenticationToken)) {
-            CustomUserDetails userDetails =
-                    (CustomUserDetails) authentication.getPrincipal();
+        CustomUserDetails userDetails = this.getCurrentCustomUserDetails();
+        if (userDetails != null) {
             User user = userDetails.getUser();
 
             String newUserEmail = profilePayload.getEmail();
@@ -77,6 +68,7 @@ public class CustomUserDetailsService {
             String newUserPassword = profilePayload.getPassword();
             if (newUserPassword != null && !newUserPassword.equals("") && !passwordEncoder.matches(newUserPassword, user.getPassword())) {
                 user.setPassword(passwordEncoder.encode(newUserPassword));
+                user.setAuthType(AuthenticationType.DATABASE);
                 userIsChanged = true;
             }
             if (userIsChanged) {
@@ -90,14 +82,35 @@ public class CustomUserDetailsService {
 
     public User saveUser(SignupPayload payload) throws UserAlreadyExistsException {
         User user = userRepository.findUserByEmail(payload.getEmail());
-        if (user == null) {
+        if (user == null || user.getPassword() == null) {
             user = modelMapper.map(payload, User.class);
             String newEncodedPassword = new BCryptPasswordEncoder().encode(payload.getPassword());
             user.setPassword(newEncodedPassword);
+            user.setAuthType(AuthenticationType.DATABASE);
             User newUser = userRepository.save(user);
             return newUser;
         } else {
             throw new UserAlreadyExistsException("This email is already associated with an account.");
         }
+    }
+
+    private CustomUserDetails getCurrentCustomUserDetails() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = null;
+        if (!(authentication instanceof AnonymousAuthenticationToken)) {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof CustomOAuth2User) {
+                CustomOAuth2User oAuth2User = (CustomOAuth2User) principal;
+                User user = userRepository.findUserByEmail(oAuth2User.getEmail());
+                userDetails = new CustomUserDetails(user);
+            } else if (principal instanceof CustomOidcUser) {
+                CustomOidcUser oidcUser = (CustomOidcUser) principal;
+                User user = userRepository.findUserByEmail(oidcUser.getEmail());
+                userDetails = new CustomUserDetails(user);
+            } else {
+                userDetails = (CustomUserDetails) principal;
+            }
+        }
+        return userDetails;
     }
 }
